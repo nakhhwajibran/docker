@@ -2,33 +2,59 @@ version: '3.8'
 
 services: 
   postgres:
+    container_name: "postgres_cont"
     image: postgres:latest
     environment:
-      POSTGRES_USER: mobydock
-      POSTGRES_PASSWORD : farzana@1611
+      POSTGRES_USER: flask-app
+      POSTGRES_PASSWORD: root
     ports:
       - '5433:5432'
     volumes:
-      - ~/.docker-volumes/mobydock/postgressql/data:/var/lib/postgressql/data
+      - ~/.docker-volumes/flask-app/postgressql/data:/var/lib/postgressql/data
+    networks:
+      - flask-app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flask-app"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   redis:
+    container_name: "redis_cont"
     image: redis
     ports:
       - '6379:6379'
     volumes:
-      - ~/.docker-volumes/mobydock/redis/data:/var/lib/redis/data
+      - ~/.docker-volumes/flask-app/redis/data:/var/lib/redis/data
+    networks:
+      - flask-app
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     
-  mobydock:
-    build: .
-    command: gunicorn -b 0.0.0.0:8000 --reload --access-logfile - "mobydock.app:create_app()"
-    environment:
-      PYTHONUNBUFFERED: true
-    links:
+  flask:
+    container_name: "flask_cont"
+    command: gunicorn -b 0.0.0.0:8000 --reload --access-logfile - "flask-app.app:create_app()"
+    build: 
+      context: .
+    env_file:
+      - .env
+    depends_on:
       - postgres
       - redis
     volumes:
-      - .:/mobydock
+      - .:/flask-app
     ports:
       - '8000:8000'
+    networks:
+      - flask-app
+
+networks:
+  flask-app:
+    driver: bridge
 
   

@@ -1,18 +1,19 @@
-FROM python:latest 
+FROM python:3.9 
 MAINTAINER Jibran Siraj Nakhwa <nakhwa.jibrann@gmail.com>
 
-RUN apt-get update && apt-get install -qq -y build-essential libpq-dev postgresql-client --fix-missing --no-install-recommends
+WORKDIR /app
 
-ENV INSTALL_PATH /mobydock
-RUN mkdir -p $INSTALL_PATH
+COPY requirements.txt /app/
 
-WORKDIR $INSTALL_PATH
+RUN apt-get update \
+    && apt-get upgrade \
+    && apt-get install -qq -y build-essential libpq-dev postgresql-client --fix-missing --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
 
-COPY . . 
+RUN pip install --no-cache -r requirements.txt
 
-VOLUME ["/mobydock/static"]
+COPY . /app/
 
-CMD gunicorn 0.0.0.0:8000 "mobydock.app.create_app()"
+CMD [ "python","app.py" ]
+

@@ -33,7 +33,7 @@ def create_app():
 @page.route('/')
 def index():
     """
-    Render the home page where visitors can feed Moby Dock.
+    Render the home page where visitors can feed Flask App.
     :return: Flask response
     """
     if request.args.get('feed'):
